@@ -82,9 +82,6 @@ class ReferenceHelper
      */
     public static function cellSort($a, $b)
     {
-        $ac = $bc = '';
-        $ar = $br = 0;
-
         sscanf($a, '%[A-Z]%d', $ac, $ar);
         sscanf($b, '%[A-Z]%d', $bc, $br);
 
@@ -106,9 +103,6 @@ class ReferenceHelper
      */
     public static function cellReverseSort($a, $b)
     {
-        $ac = $bc = '';
-        $ar = $br = 0;
-
         sscanf($a, '%[A-Z]%d', $ac, $ar);
         sscanf($b, '%[A-Z]%d', $bc, $br);
 
@@ -535,8 +529,6 @@ class ReferenceHelper
             if ($pNumCols != 0) {
                 $autoFilterColumns = $autoFilter->getColumns();
                 if (count($autoFilterColumns) > 0) {
-                    $column = '';
-                    $row = 0;
                     sscanf($pBefore, '%[A-Z]%d', $column, $row);
                     $columnIndex = Coordinate::columnIndexFromString($column);
                     list($rangeStart, $rangeEnd) = Coordinate::rangeBoundaries($autoFilterRange);

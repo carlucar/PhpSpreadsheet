@@ -2,8 +2,8 @@
 
 namespace PhpOffice\PhpSpreadsheet\Calculation;
 
-use Matrix\Exception as MatrixException;
-use Matrix\Matrix;
+use PhpOffice\PhpSpreadsheet\Exception as PhpSpreadsheetException;
+use PhpOffice\PhpSpreadsheet\Shared\JAMA\Matrix;
 
 class MathTrig
 {
@@ -498,7 +498,7 @@ class MathTrig
                 if ((is_string($matrixCell)) || ($matrixCell === null)) {
                     return Functions::VALUE();
                 }
-                $matrixData[$row][$column] = $matrixCell;
+                $matrixData[$column][$row] = $matrixCell;
                 ++$column;
             }
             if ($column > $maxColumn) {
@@ -506,15 +506,15 @@ class MathTrig
             }
             ++$row;
         }
-
-        $matrix = new Matrix($matrixData);
-        if (!$matrix->isSquare()) {
+        if ($row != $maxColumn) {
             return Functions::VALUE();
         }
 
         try {
-            return $matrix->determinant();
-        } catch (MatrixException $ex) {
+            $matrix = new Matrix($matrixData);
+
+            return $matrix->det();
+        } catch (PhpSpreadsheetException $ex) {
             return Functions::VALUE();
         }
     }
@@ -550,7 +550,7 @@ class MathTrig
                 if ((is_string($matrixCell)) || ($matrixCell === null)) {
                     return Functions::VALUE();
                 }
-                $matrixData[$row][$column] = $matrixCell;
+                $matrixData[$column][$row] = $matrixCell;
                 ++$column;
             }
             if ($column > $maxColumn) {
@@ -558,19 +558,17 @@ class MathTrig
             }
             ++$row;
         }
-
-        $matrix = new Matrix($matrixData);
-        if (!$matrix->isSquare()) {
-            return Functions::VALUE();
-        }
-
-        if ($matrix->determinant() == 0.0) {
-            return Functions::NAN();
+        foreach ($matrixValues as $matrixRow) {
+            if (count($matrixRow) != $maxColumn) {
+                return Functions::VALUE();
+            }
         }
 
         try {
-            return $matrix->inverse()->toArray();
-        } catch (MatrixException $ex) {
+            $matrix = new Matrix($matrixData);
+
+            return $matrix->inverse()->getArray();
+        } catch (PhpSpreadsheetException $ex) {
             return Functions::VALUE();
         }
     }
@@ -631,8 +629,8 @@ class MathTrig
                 return Functions::VALUE();
             }
 
-            return $matrixA->multiply($matrixB)->toArray();
-        } catch (MatrixException $ex) {
+            return $matrixA->times($matrixB)->getArray();
+        } catch (PhpSpreadsheetException $ex) {
             return Functions::VALUE();
         }
     }
@@ -1224,10 +1222,8 @@ class MathTrig
             }
 
             $testCondition = '=' . $arg . $condition;
-
-            if (is_numeric($sumArgs[$key]) &&
-                Calculation::getInstance()->_calculateFormulaValue($testCondition)) {
-                // Is it a value within our criteria and only numeric can be added to the result
+            if (Calculation::getInstance()->_calculateFormulaValue($testCondition)) {
+                // Is it a value within our criteria
                 $returnValue += $sumArgs[$key];
             }
         }
@@ -1258,36 +1254,26 @@ class MathTrig
         $returnValue = 0;
 
         $sumArgs = Functions::flattenArray(array_shift($arrayList));
-        $aArgsArray = [];
-        $conditions = [];
 
         while (count($arrayList) > 0) {
             $aArgsArray[] = Functions::flattenArray(array_shift($arrayList));
             $conditions[] = Functions::ifCondition(array_shift($arrayList));
         }
 
-        // Loop through each sum and see if arguments and conditions are true
-        foreach ($sumArgs as $index => $value) {
-            $valid = true;
+        // Loop through each set of arguments and conditions
+        foreach ($conditions as $index => $condition) {
+            $aArgs = $aArgsArray[$index];
 
-            foreach ($conditions as $cidx => $condition) {
-                $arg = $aArgsArray[$cidx][$index];
-
-                // Loop through arguments
+            // Loop through arguments
+            foreach ($aArgs as $key => $arg) {
                 if (!is_numeric($arg)) {
                     $arg = Calculation::wrapResult(strtoupper($arg));
                 }
                 $testCondition = '=' . $arg . $condition;
-                if (!Calculation::getInstance()->_calculateFormulaValue($testCondition)) {
-                    // Is not a value within our criteria
-                    $valid = false;
-
-                    break; // if false found, don't need to check other conditions
+                if (Calculation::getInstance()->_calculateFormulaValue($testCondition)) {
+                    // Is it a value within our criteria
+                    $returnValue += $sumArgs[$key];
                 }
-            }
-
-            if ($valid) {
-                $returnValue += $value;
             }
         }
 

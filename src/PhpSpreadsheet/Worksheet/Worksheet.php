@@ -1191,12 +1191,9 @@ class Worksheet implements IComparable
      */
     public function getCell($pCoordinate, $createIfNotExists = true)
     {
-        // Uppercase coordinate
-        $pCoordinateUpper = strtoupper($pCoordinate);
-
         // Check cell collection
-        if ($this->cellCollection->has($pCoordinateUpper)) {
-            return $this->cellCollection->get($pCoordinateUpper);
+        if ($this->cellCollection->has(strtoupper($pCoordinate))) {
+            return $this->cellCollection->get($pCoordinate);
         }
 
         // Worksheet reference?
@@ -1217,6 +1214,9 @@ class Worksheet implements IComparable
             }
         }
 
+        // Uppercase coordinate
+        $pCoordinate = strtoupper($pCoordinate);
+
         if (Coordinate::coordinateIsRange($pCoordinate)) {
             throw new Exception('Cell coordinate can not be a range of cells.');
         } elseif (strpos($pCoordinate, '$') !== false) {
@@ -1224,7 +1224,7 @@ class Worksheet implements IComparable
         }
 
         // Create new cell object, if required
-        return $createIfNotExists ? $this->createNewCell($pCoordinateUpper) : null;
+        return $createIfNotExists ? $this->createNewCell($pCoordinate) : null;
     }
 
     /**
@@ -1268,9 +1268,7 @@ class Worksheet implements IComparable
         if (Coordinate::columnIndexFromString($this->cachedHighestColumn) < Coordinate::columnIndexFromString($aCoordinates[0])) {
             $this->cachedHighestColumn = $aCoordinates[0];
         }
-        if ($aCoordinates[1] > $this->cachedHighestRow) {
-            $this->cachedHighestRow = $aCoordinates[1];
-        }
+        $this->cachedHighestRow = max($this->cachedHighestRow, $aCoordinates[1]);
 
         // Cell needs appropriate xfIndex from dimensions records
         //    but don't create dimension records if they don't already exist
@@ -2731,12 +2729,12 @@ class Worksheet implements IComparable
     public static function extractSheetTitle($pRange, $returnRange = false)
     {
         // Sheet title included?
-        if (($sep = strrpos($pRange, '!')) === false) {
-            return $returnRange ? ['', $pRange] : '';
+        if (($sep = strpos($pRange, '!')) === false) {
+            return '';
         }
 
         if ($returnRange) {
-            return [substr($pRange, 0, $sep), substr($pRange, $sep + 1)];
+            return [trim(substr($pRange, 0, $sep), "'"), substr($pRange, $sep + 1)];
         }
 
         return substr($pRange, $sep + 1);
@@ -3061,6 +3059,6 @@ class Worksheet implements IComparable
      */
     public function hasCodeName()
     {
-        return $this->codeName !== null;
+        return !($this->codeName === null);
     }
 }

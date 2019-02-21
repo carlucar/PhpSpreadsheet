@@ -125,7 +125,6 @@ class QRDecomposition
      */
     public function getH()
     {
-        $H = [];
         for ($i = 0; $i < $this->m; ++$i) {
             for ($j = 0; $j < $this->n; ++$j) {
                 if ($i >= $j) {
@@ -148,7 +147,6 @@ class QRDecomposition
      */
     public function getR()
     {
-        $R = [];
         for ($i = 0; $i < $this->n; ++$i) {
             for ($j = 0; $j < $this->n; ++$j) {
                 if ($i < $j) {
@@ -173,7 +171,6 @@ class QRDecomposition
      */
     public function getQ()
     {
-        $Q = [];
         for ($k = $this->n - 1; $k >= 0; --$k) {
             for ($i = 0; $i < $this->m; ++$i) {
                 $Q[$i][$k] = 0.0;

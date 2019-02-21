@@ -155,6 +155,9 @@ class RowCellIterator extends CellIterator
      */
     public function prev()
     {
+        if ($this->currentColumnIndex <= $this->startColumnIndex) {
+            throw new PhpSpreadsheetException('Column is already at the beginning of range (' . Coordinate::stringFromColumnIndex($this->endColumnIndex) . ' - ' . Coordinate::stringFromColumnIndex($this->endColumnIndex) . ')');
+        }
         do {
             --$this->currentColumnIndex;
         } while (($this->onlyExistingCells) && (!$this->worksheet->cellExistsByColumnAndRow($this->currentColumnIndex, $this->rowIndex)) && ($this->currentColumnIndex >= $this->startColumnIndex));
@@ -167,7 +170,7 @@ class RowCellIterator extends CellIterator
      */
     public function valid()
     {
-        return $this->currentColumnIndex <= $this->endColumnIndex && $this->currentColumnIndex >= $this->startColumnIndex;
+        return $this->currentColumnIndex <= $this->endColumnIndex;
     }
 
     /**

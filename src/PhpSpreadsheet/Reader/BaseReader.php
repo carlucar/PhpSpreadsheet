@@ -2,7 +2,6 @@
 
 namespace PhpOffice\PhpSpreadsheet\Reader;
 
-use PhpOffice\PhpSpreadsheet\Reader\Security\XmlScanner;
 use PhpOffice\PhpSpreadsheet\Shared\File;
 
 abstract class BaseReader implements IReader
@@ -49,11 +48,6 @@ abstract class BaseReader implements IReader
     protected $readFilter;
 
     protected $fileHandle;
-
-    /**
-     * @var XmlScanner
-     */
-    protected $securityScanner;
 
     /**
      * Read data only?
@@ -210,15 +204,6 @@ abstract class BaseReader implements IReader
         return $this;
     }
 
-    public function getSecuritySCanner()
-    {
-        if (property_exists($this, 'securityScanner')) {
-            return $this->securityScanner;
-        }
-
-        return null;
-    }
-
     /**
      * Open file for reading.
      *
@@ -235,5 +220,38 @@ abstract class BaseReader implements IReader
         if ($this->fileHandle === false) {
             throw new Exception('Could not open file ' . $pFilename . ' for reading.');
         }
+    }
+
+    /**
+     * Scan theXML for use of <!ENTITY to prevent XXE/XEE attacks.
+     *
+     * @param string $xml
+     *
+     * @throws Exception
+     *
+     * @return string
+     */
+    public function securityScan($xml)
+    {
+        $pattern = '/\\0?' . implode('\\0?', str_split('<!DOCTYPE')) . '\\0?/';
+        if (preg_match($pattern, $xml)) {
+            throw new Exception('Detected use of ENTITY in XML, spreadsheet file load() aborted to prevent XXE/XEE attacks');
+        }
+
+        return $xml;
+    }
+
+    /**
+     * Scan theXML for use of <!ENTITY to prevent XXE/XEE attacks.
+     *
+     * @param string $filestream
+     *
+     * @throws Exception
+     *
+     * @return string
+     */
+    public function securityScanFile($filestream)
+    {
+        return $this->securityScan(file_get_contents($filestream));
     }
 }

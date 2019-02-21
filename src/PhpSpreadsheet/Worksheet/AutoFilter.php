@@ -89,8 +89,11 @@ class AutoFilter
      */
     public function setRange($pRange)
     {
-        // extract coordinate
-        list($worksheet, $pRange) = Worksheet::extractSheetTitle($pRange, true);
+        // Uppercase coordinate
+        $cellAddress = explode('!', strtoupper($pRange));
+        if (count($cellAddress) > 1) {
+            list($worksheet, $pRange) = $cellAddress;
+        }
 
         if (strpos($pRange, ':') !== false) {
             $this->range = $pRange;
@@ -367,8 +370,6 @@ class AutoFilter
         }
         $returnVal = ($join == AutoFilter\Column::AUTOFILTER_COLUMN_JOIN_AND);
         foreach ($dataSet as $rule) {
-            $retVal = false;
-
             if (is_numeric($rule['value'])) {
                 //    Numeric values are tested using the appropriate operator
                 switch ($rule['operator']) {
@@ -749,8 +750,6 @@ class AutoFilter
                         } else {
                             //    Date based
                             if ($dynamicRuleType[0] == 'M' || $dynamicRuleType[0] == 'Q') {
-                                $periodType = '';
-                                $period = 0;
                                 //    Month or Quarter
                                 sscanf($dynamicRuleType, '%[A-Z]%d', $periodType, $period);
                                 if ($periodType == 'M') {
